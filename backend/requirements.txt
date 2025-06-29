@@ -7,3 +7,5 @@ pytest==7.4.2
 pytest-flask==1.2.0
 pytest-cov==4.1.0
 Werkzeug==2.3.7
+flake8==6.0.0
+safety==2.3.5
