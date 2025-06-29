@@ -1,0 +1,15 @@
+# Global owners
+
+* Williedaniels
+
+## Backend specific
+
+backend/ @Williedaniels
+
+## Frontend specific
+
+frontend/ @Williedaniels
+
+## CI/CD configuration
+
+.github/ @Williedaniels
