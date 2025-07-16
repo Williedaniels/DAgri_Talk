@@ -24,7 +24,3 @@ test('renders platform description', () => {
   const description = screen.getByText(/Traditional Agricultural Knowledge Platform for Liberia/i);
   expect(description).toBeInTheDocument();
 });
-
-function expect(welcomeElement: HTMLElement) {
-    throw new Error('Function not implemented.');
-}
