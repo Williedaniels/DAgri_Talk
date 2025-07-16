@@ -1,0 +1,126 @@
+# =============================================================================
+# D'Agri Talk - Development Docker Compose Configuration
+# =============================================================================
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: dagri-talk-db-dev
+    environment:
+      POSTGRES_DB: dagri_talk_dev
+      POSTGRES_USER: dagri_user
+      POSTGRES_PASSWORD: dagri_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - dagri-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dagri_user -d dagri_talk_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (for session management and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: dagri-talk-redis-dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - dagri-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: dagri-talk-backend-dev
+    env_file:
+      - .env.development
+    volumes:
+      - ./backend:/app:ro
+      - backend_logs:/app/logs
+    ports:
+      - "5000:5000"
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - dagri-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL}
+    container_name: dagri-talk-frontend-dev
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - dagri-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx Load Balancer (for production-like setup)
+  nginx:
+    image: nginx:alpine
+    container_name: dagri-talk-nginx-dev
+    volumes:
+      - ./docker/nginx/nginx-dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - dagri-network
+    restart: unless-stopped
+
+# Named volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_logs:
+    driver: local
+
+# Custom network for service communication
+networks:
+  dagri-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
