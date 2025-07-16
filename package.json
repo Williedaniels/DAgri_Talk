@@ -1,0 +1,14 @@
+{
+    "name": "dagri-talk",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "chmod +x scripts/*.sh && ./scripts/build.sh",
+        "dev": "chmod +x scripts/*.sh && ./scripts/dev.sh",
+        "prod": "chmod +x scripts/*.sh && ./scripts/prod.sh",
+        "stop": "docker compose down",
+        "stop-prod": "docker compose -f docker-compose.prod.yml down",
+        "logs": "docker compose logs -f",
+        "logs-prod": "docker compose -f docker-compose.prod.yml logs -f",
+        "clean": "docker system prune -f && docker volume prune -f"
+    }
+}
