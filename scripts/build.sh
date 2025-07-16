@@ -5,14 +5,10 @@ set -e
 
 echo "🚀 Building D'Agri Talk Containers..."
 
-# Load environment variables
-if [ -f .env.development ]; then
-    export $(cat .env.development | grep -v '#' | xargs)
-fi
-
 # Build all services with docker-compose
 echo "📦 Building all services with docker-compose..."
-docker compose build --no-cache
+docker compose --env-file .env.development build --no-cache
+
 
 echo "✅ Build completed successfully!"
 echo "🎯 Next steps:"
