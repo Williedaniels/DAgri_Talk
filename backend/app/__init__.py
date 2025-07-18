@@ -25,6 +25,11 @@ def create_app(config_name='default'):
     app.register_blueprint(knowledge_bp, url_prefix='/api/knowledge')
     app.register_blueprint(market_bp, url_prefix='/api/market')
     
+    # Health check endpoint
+    @app.route('/api/health')
+    def health_check():
+        return {'status': 'healthy', 'service': 'dagri-talk-backend'}, 200
+    
     # Create tables
     with app.app_context():
         db.create_all()
