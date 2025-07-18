@@ -1,0 +1,5 @@
+# Ignore node_modules, as they will be installed inside the container
+node_modules
+
+# Ignore build output, as it will be generated inside the container
+build

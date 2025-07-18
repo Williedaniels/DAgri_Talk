@@ -220,11 +220,9 @@ Important outputs from the infrastructure:
 
 ## 📚 Additional Resources
 
-- **Terraform AWS Provider Documentation** <https://registry.terraform.io/providers/hashicorp/aws/latest/docs>
-
-- **AWS Well-Architected Framework** <https://aws.amazon.com/architecture/well-architected/?ams%23interactive-card-vertical%23pattern-data.filter=%257B%2522filters%2522%253A%255B%255D%257D>
-
-- **Terraform Best Practices** <https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices>
+- [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+- [Terraform Best Practices](https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices)
 
 ## 🎯 Success Criteria for Exemplary IaC
 

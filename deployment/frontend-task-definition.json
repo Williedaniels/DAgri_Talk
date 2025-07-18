@@ -1,0 +1,45 @@
+{
+    "family": "dagri-talk-frontend-dev",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::103670753244:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "dagri-talk-frontend",
+            "image": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-frontend:latest",
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "REACT_APP_API_URL",
+                    "value": "http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com/api"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/dagri-talk-frontend-dev",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:80/ || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            }
+        }
+    ]
+}
