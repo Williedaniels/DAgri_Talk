@@ -1,6 +1,5 @@
 import json
 import pytest
-from flask_jwt_extended import create_access_token
 
 def test_user_registration(client):
     response = client.post('/api/auth/register', 
@@ -11,8 +10,8 @@ def test_user_registration(client):
             'user_type': 'farmer'
         })
     
+    data = response.json
     assert response.status_code == 201
-    data = json.loads(response.data)
     assert data['message'] == 'User registered successfully'
 
 def test_user_login(client, sample_user):
@@ -22,29 +21,30 @@ def test_user_login(client, sample_user):
             'password': 'testpassword'
         })
     
+    data = response.json
     assert response.status_code == 200
-    data = json.loads(response.data)
     assert 'access_token' in data
     assert data['user']['username'] == 'testuser'
 
-def test_create_knowledge_entry(client, sample_user, app):
-    with app.app_context():
-        access_token = create_access_token(identity=sample_user.id)
-    
+def test_create_knowledge_entry(client, auth_headers):
     response = client.post('/api/knowledge/',
         json={
             'title': 'Cassava Processing',
             'content': 'How to process cassava into flour',
-            'crop_type': 'Cassava'
+            'crop_type': 'Cassava',
+            'season': 'Rainy Season',
+            'region': 'Bong County',
+            'language': 'English'
         },
-        headers={'Authorization': f'Bearer {access_token}'})
+        headers=auth_headers)
     
-    assert response.status_code == 201
-    data = json.loads(response.data)
+    data = response.json
+    # This improved assertion will show the API error message if the status code is wrong
+    assert response.status_code == 201, f"Expected status 201, but got {response.status_code}. Response: {data}"
     assert data['title'] == 'Cassava Processing'
 
 def test_get_market_listings(client):
     response = client.get('/api/market/')
+    data = response.json
     assert response.status_code == 200
-    data = json.loads(response.data)
     assert isinstance(data, list)
