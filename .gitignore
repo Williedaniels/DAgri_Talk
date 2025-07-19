@@ -89,3 +89,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.terraform/
+*.tfstate
+*.tfstate.*
