@@ -11,13 +11,16 @@
 D'Agri Talk is a digital platform that preserves and shares traditional Liberian agricultural knowledge while connecting smallholder farmers with modern markets and resources. The platform bridges generational knowledge gaps by allowing elders to document traditional farming practices in local languages, while providing farmers with market access, weather information, and community support networks.
 
 ### 🎯 Problem Statement
+
 - **Knowledge Loss**: Traditional agricultural wisdom is disappearing as elders pass away
 - **Market Access**: Smallholder farmers struggle to connect with buyers and get fair prices
 - **Information Gap**: Limited access to agricultural resources and modern farming techniques
 - **Language Barriers**: Agricultural information often not available in local Liberian languages
 
 ### 💡 Solution
+
 D'Agri Talk addresses these challenges by creating a comprehensive digital platform that:
+
 - Preserves traditional knowledge through multimedia documentation
 - Connects farmers directly with buyers and markets
 - Provides agricultural resources and community support
@@ -26,18 +29,21 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 ## ✨ Key Features
 
 ### 🏛️ Traditional Knowledge Repository
+
 - **Multimedia Documentation**: Elders record farming wisdom with text, audio, and images
 - **Multi-language Support**: Content in English and indigenous Liberian languages (Kpelle, Bassa, Gio)
 - **Searchable Database**: Find knowledge by crop type, season, region, or farming technique
 - **Community Validation**: Knowledge entries reviewed and validated by community experts
 
 ### 🏪 Farmer-to-Market Connection
+
 - **Produce Listings**: Farmers list crops with quantities, prices, and availability
 - **Buyer Network**: Connect with local buyers, cooperatives, and agricultural businesses
 - **Real-time Pricing**: Access current market prices for various crops
 - **Location-based Matching**: Find buyers and sellers in your region
 
 ### 👥 Community Support Network
+
 - **Discussion Forums**: Ask questions and share experiences with fellow farmers
 - **Expert Advice**: Access guidance from agricultural extension officers
 - **Peer Learning**: Learn from successful farming practices across Liberia
@@ -46,6 +52,7 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 ## 🛠️ Technology Stack
 
 ### Backend
+
 - **Framework**: Flask (Python 3.11)
 - **Database**: PostgreSQL with SQLAlchemy ORM
 - **Authentication**: JWT (JSON Web Tokens)
@@ -53,6 +60,7 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 - **Security**: CORS configuration, input validation, password hashing
 
 ### Frontend
+
 - **Framework**: React 18 with TypeScript
 - **Styling**: CSS3 with responsive design
 - **State Management**: React Hooks and Context API
@@ -60,6 +68,7 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 - **Mobile Optimization**: Progressive Web App (PWA) capabilities
 
 ### DevOps & Infrastructure
+
 - **Containerization**: Docker with multi-stage builds
 - **Infrastructure**: Terraform for AWS infrastructure management
 - **Container Orchestration**: Amazon ECS with Fargate
@@ -75,6 +84,7 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - **Docker**: Docker Desktop or Docker Engine
 - **Docker Compose**: Version 2.0+
 - **Git**: For version control
@@ -84,12 +94,14 @@ D'Agri Talk addresses these challenges by creating a comprehensive digital platf
 ### 🐳 Docker Setup (Recommended)
 
 #### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/Williedaniels/DAgri_Talk.git
 cd DAgri_Talk
 ```
 
 #### 2. Using Docker Compose (Fastest Setup)
+
 ```bash
 # Start all services with Docker Compose
 docker-compose up -d
@@ -102,11 +114,13 @@ docker-compose logs -f
 ```
 
 #### 3. Access the Application
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5001
+
+- **Frontend**: <http://localhost:3000>
+- **Backend API**: <http://localhost:5001>
 - **Database**: PostgreSQL on localhost:5432
 
 #### 4. Stop Services
+
 ```bash
 # Stop all services
 docker-compose down
@@ -118,6 +132,7 @@ docker-compose down -v
 ### 🔧 Manual Docker Setup
 
 #### 1. Build Individual Images
+
 ```bash
 # Build backend image
 docker build -t dagri-talk-backend ./backend
@@ -127,6 +142,7 @@ docker build -t dagri-talk-frontend ./frontend
 ```
 
 #### 2. Run with Docker Network
+
 ```bash
 # Create network
 docker network create dagri-talk-network
@@ -160,11 +176,13 @@ docker run -d \
 ### 🖥️ Local Development Setup (Without Docker)
 
 #### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 12+ (optional, SQLite used for development)
 
 #### 1. Backend Setup
+
 ```bash
 cd backend
 
@@ -184,6 +202,7 @@ python run.py
 ```
 
 #### 2. Frontend Setup
+
 ```bash
 cd frontend
 
@@ -195,9 +214,10 @@ npm start
 ```
 
 #### 3. Access the Application
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5001
-- **API Documentation**: http://localhost:5001/api/docs
+
+- **Frontend**: <http://localhost:3000>
+- **Backend API**: <http://localhost:5001>
+- **API Documentation**: <http://localhost:5001/api/docs>
 
 ### Environment Variables
 
@@ -213,6 +233,7 @@ FLASK_ENV=development
 ## 🧪 Testing
 
 ### Docker Testing
+
 ```bash
 # Run backend tests in container
 docker-compose exec backend pytest tests/ --cov=app --cov-report=html
@@ -222,6 +243,7 @@ docker-compose exec frontend npm test -- --coverage --watchAll=false
 ```
 
 ### Local Testing
+
 ```bash
 # Backend tests
 cd backend
@@ -238,10 +260,12 @@ npm test -- --coverage
 ### AWS Infrastructure with Terraform
 
 #### 1. Prerequisites
+
 - AWS CLI configured with appropriate credentials
 - Terraform installed (version >= 1.0)
 
 #### 2. Deploy Infrastructure
+
 ```bash
 # Navigate to development environment
 cd terraform/environments/dev
@@ -257,6 +281,7 @@ terraform apply
 ```
 
 #### 3. Build and Push Container Images
+
 ```bash
 # Get ECR login token
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.us-east-1.amazonaws.com
@@ -273,6 +298,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-frontend:lat
 ```
 
 #### 4. Deploy to ECS
+
 ```bash
 # Execute deployment script
 chmod +x deployment/deploy.sh
@@ -282,22 +308,26 @@ chmod +x deployment/deploy.sh
 ## 📊 API Documentation
 
 ### Authentication Endpoints
+
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `GET /api/auth/profile` - Get user profile (requires auth)
 
 ### Knowledge Management
+
 - `GET /api/knowledge/` - List all knowledge entries
 - `POST /api/knowledge/` - Create new knowledge entry (requires auth)
 - `GET /api/knowledge/{id}` - Get specific knowledge entry
 
 ### Market Listings
+
 - `GET /api/market/` - List all market listings
 - `POST /api/market/` - Create new market listing (requires auth)
 
 ### Example API Usage
 
 #### Register a New User
+
 ```bash
 curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
@@ -311,6 +341,7 @@ curl -X POST http://localhost:5001/api/auth/register \
 ```
 
 #### Create Knowledge Entry
+
 ```bash
 curl -X POST http://localhost:5001/api/knowledge/ \
   -H "Content-Type: application/json" \
@@ -328,7 +359,8 @@ curl -X POST http://localhost:5001/api/knowledge/ \
 ## 🏗️ Project Architecture
 
 ### System Architecture
-```
+
+```sh
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  React Frontend │    │   Flask Backend │    │   PostgreSQL    │
 │   (Port 3000)   │◄──►│   (Port 5001)   │◄──►│   Database      │
@@ -341,19 +373,21 @@ curl -X POST http://localhost:5001/api/knowledge/ \
 ```
 
 ### Container Architecture
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Docker Compose                           │
-├─────────────────────────────────────────────────────────────┤
+
+```sh
+┌──────────────—───────────────────────────────────────────────┐
+│                     Docker Compose                           │
+├─────────────────────────—────────────────────────────────────┤
 │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │
 │  │  Frontend       │ │  Backend        │ │  Database       │ │
 │  │  (Nginx)        │ │  (Flask/Gunicorn│ │  (PostgreSQL)   │ │
 │  │  Port: 3000     │ │  Port: 5001     │ │  Port: 5432     │ │
 │  └─────────────────┘ └─────────────────┘ └─────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+└────────────────────────—─────────────────────────────────────┘
 ```
 
 ### Database Schema
+
 ```sql
 -- Users table
 CREATE TABLE user (
@@ -400,6 +434,7 @@ CREATE TABLE market_listing (
 The project uses GitHub Actions for continuous integration and deployment:
 
 ### Pipeline Stages
+
 1. **Code Quality**: ESLint (frontend) and flake8 (backend)
 2. **Testing**: Unit tests for both frontend and backend
 3. **Security**: Vulnerability scanning with Trivy and Safety
@@ -407,10 +442,12 @@ The project uses GitHub Actions for continuous integration and deployment:
 5. **Coverage**: Test coverage reporting
 
 ### Workflow Triggers
+
 - Pull requests to `main` or `develop` branches
 - Direct pushes to `main` or `develop` branches
 
 ### Quality Gates
+
 - All tests must pass
 - Code coverage must meet minimum thresholds
 - No security vulnerabilities detected
@@ -429,12 +466,14 @@ D'Agri Talk is designed with mobile-first principles, considering that most Libe
 ## 🌍 Impact & Future Development
 
 ### Current Impact
+
 - **Knowledge Preservation**: Platform for documenting traditional farming practices
 - **Market Access**: Direct farmer-to-buyer connections
 - **Community Building**: Forums for agricultural knowledge sharing
 - **Technology Adoption**: Introducing digital tools to rural farming communities
 
 ### Future Enhancements
+
 - **Weather Integration**: Local weather forecasts and alerts
 - **Mobile App**: Native iOS and Android applications
 - **Payment Integration**: Mobile money integration for transactions
@@ -447,6 +486,7 @@ D'Agri Talk is designed with mobile-first principles, considering that most Libe
 We welcome contributions to D'Agri Talk! Please follow these guidelines:
 
 ### Development Workflow
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
@@ -457,12 +497,14 @@ We welcome contributions to D'Agri Talk! Please follow these guidelines:
 8. Open a Pull Request
 
 ### Code Standards
+
 - Follow existing code style and conventions
 - Write comprehensive tests for new features
 - Update documentation for any API changes
 - Ensure all CI checks pass
 
 ### Issue Reporting
+
 - Use GitHub Issues for bug reports and feature requests
 - Provide detailed descriptions and reproduction steps
 - Include relevant system information and error messages
@@ -474,8 +516,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👥 Team
 
 **Willie B. Daniels** - *Project Developer*
+
 - GitHub: [@Williedaniels](https://github.com/Williedaniels)
-- Email: w.daniels@alustudent.com
+- Email: <w.daniels@alustudent.com>
 
 ## 🙏 Acknowledgments
 
@@ -486,7 +529,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email w.daniels@alustudent.com or create an issue in the GitHub repository.
+For support, email <w.daniels@alustudent.com> or create an issue in the GitHub repository.
 
 ---
 
