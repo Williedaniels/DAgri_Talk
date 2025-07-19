@@ -11,7 +11,6 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///dagri_talk_dev.db'
 
 class TestingConfig(Config):
     TESTING = True
