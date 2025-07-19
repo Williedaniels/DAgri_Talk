@@ -1,0 +1,24 @@
+{
+    "clusterName": "dagri-talk-dev-cluster",
+    "tags": [
+        {
+            "key": "Project",
+            "value": "D'Agri Talk"
+        },
+        {
+            "key": "Environment",
+            "value": "dev"
+        },
+        {
+            "key": "ManagedBy",
+            "value": "Manual Deployment"
+        }
+    ],
+    "capacityProviders": ["FARGATE"],
+    "defaultCapacityProviderStrategy": [
+        {
+            "capacityProvider": "FARGATE",
+            "weight": 1
+        }
+    ]
+}

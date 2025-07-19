@@ -1,0 +1,44 @@
+{
+    "family": "dagri-talk-backend-dev",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::103670753244:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::103670753244:role/ecsTaskRole",
+    "containerDefinitions": [
+        {
+            "name": "dagri-talk-backend",
+            "image": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-backend:latest",
+            "portMappings": [
+                {
+                    "containerPort": 5000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "FLASK_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "FLASK_APP",
+                    "value": "run.py"
+                },
+                {
+                    "name": "DATABASE_URL",
+                    "value": "sqlite:///dagri_talk_dev.db"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/dagri-talk-backend-dev",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        }
+    ]
+}

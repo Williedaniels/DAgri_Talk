@@ -43,4 +43,5 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     # Create tables
     with app.app_context():
         db.create_all()
+    
     return app

@@ -1,0 +1,291 @@
+{
+  "version": 4,
+  "terraform_version": "1.12.2",
+  "serial": 107,
+  "lineage": "99343896-03c0-963b-96dd-3bc6aa65798f",
+  "outputs": {},
+  "resources": [
+    {
+      "module": "module.container_registry",
+      "mode": "data",
+      "type": "aws_caller_identity",
+      "name": "current",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "account_id": "103670753244",
+            "arn": "arn:aws:iam::103670753244:user/Wiova231",
+            "id": "103670753244",
+            "user_id": "AIDARQI2CE7OAY3477KDL"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_lifecycle_policy",
+      "name": "backend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "dagri-talk-dev-backend",
+            "policy": "{\"rules\":[{\"action\":{\"type\":\"expire\"},\"description\":\"Keep last 10 production images\",\"rulePriority\":1,\"selection\":{\"countNumber\":10,\"countType\":\"imageCountMoreThan\",\"tagPrefixList\":[\"prod\"],\"tagStatus\":\"tagged\"}},{\"action\":{\"type\":\"expire\"},\"description\":\"Keep last 5 development images\",\"rulePriority\":2,\"selection\":{\"countNumber\":5,\"countType\":\"imageCountMoreThan\",\"tagPrefixList\":[\"dev\",\"staging\"],\"tagStatus\":\"tagged\"}},{\"action\":{\"type\":\"expire\"},\"description\":\"Delete untagged images older than 1 day\",\"rulePriority\":3,\"selection\":{\"countNumber\":1,\"countType\":\"sinceImagePushed\",\"countUnit\":\"days\",\"tagStatus\":\"untagged\"}}]}",
+            "registry_id": "103670753244",
+            "repository": "dagri-talk-dev-backend"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.container_registry.aws_ecr_repository.backend"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_lifecycle_policy",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "dagri-talk-dev-frontend",
+            "policy": "{\"rules\":[{\"action\":{\"type\":\"expire\"},\"description\":\"Keep last 10 production images\",\"rulePriority\":1,\"selection\":{\"countNumber\":10,\"countType\":\"imageCountMoreThan\",\"tagPrefixList\":[\"prod\"],\"tagStatus\":\"tagged\"}},{\"action\":{\"type\":\"expire\"},\"description\":\"Keep last 5 development images\",\"rulePriority\":2,\"selection\":{\"countNumber\":5,\"countType\":\"imageCountMoreThan\",\"tagPrefixList\":[\"dev\",\"staging\"],\"tagStatus\":\"tagged\"}},{\"action\":{\"type\":\"expire\"},\"description\":\"Delete untagged images older than 1 day\",\"rulePriority\":3,\"selection\":{\"countNumber\":1,\"countType\":\"sinceImagePushed\",\"countUnit\":\"days\",\"tagStatus\":\"untagged\"}}]}",
+            "registry_id": "103670753244",
+            "repository": "dagri-talk-dev-frontend"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.container_registry.aws_ecr_repository.frontend"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "backend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:103670753244:repository/dagri-talk-dev-backend",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "dagri-talk-dev-backend",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "dagri-talk-dev-backend",
+            "registry_id": "103670753244",
+            "repository_url": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-backend",
+            "tags": {
+              "Application": "backend",
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-backend-ecr",
+              "Owner": "Development Team",
+              "Type": "container-registry"
+            },
+            "tags_all": {
+              "Application": "backend",
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-backend-ecr",
+              "Owner": "Development Team",
+              "Type": "container-registry"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_repository",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecr:us-east-1:103670753244:repository/dagri-talk-dev-frontend",
+            "encryption_configuration": [
+              {
+                "encryption_type": "AES256",
+                "kms_key": ""
+              }
+            ],
+            "force_delete": null,
+            "id": "dagri-talk-dev-frontend",
+            "image_scanning_configuration": [
+              {
+                "scan_on_push": true
+              }
+            ],
+            "image_tag_mutability": "MUTABLE",
+            "name": "dagri-talk-dev-frontend",
+            "registry_id": "103670753244",
+            "repository_url": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-frontend",
+            "tags": {
+              "Application": "frontend",
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-frontend-ecr",
+              "Owner": "Development Team",
+              "Type": "container-registry"
+            },
+            "tags_all": {
+              "Application": "frontend",
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-frontend-ecr",
+              "Owner": "Development Team",
+              "Type": "container-registry"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiZGVsZXRlIjoxMjAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_repository_policy",
+      "name": "backend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "dagri-talk-dev-backend",
+            "policy": "{\"Statement\":[{\"Action\":[\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchGetImage\",\"ecr:BatchCheckLayerAvailability\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::103670753244:root\"},\"Sid\":\"AllowPull\"}],\"Version\":\"2012-10-17\"}",
+            "registry_id": "103670753244",
+            "repository": "dagri-talk-dev-backend"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.container_registry.aws_ecr_repository.backend",
+            "module.container_registry.data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.container_registry",
+      "mode": "managed",
+      "type": "aws_ecr_repository_policy",
+      "name": "frontend",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "dagri-talk-dev-frontend",
+            "policy": "{\"Statement\":[{\"Action\":[\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchGetImage\",\"ecr:BatchCheckLayerAvailability\"],\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::103670753244:root\"},\"Sid\":\"AllowPull\"}],\"Version\":\"2012-10-17\"}",
+            "registry_id": "103670753244",
+            "repository": "dagri-talk-dev-frontend"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.container_registry.aws_ecr_repository.frontend",
+            "module.container_registry.data.aws_caller_identity.current"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.networking",
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:103670753244:vpc/vpc-00c7c47549cd82ae1",
+            "assign_generated_ipv6_cidr_block": false,
+            "cidr_block": "10.0.0.0/16",
+            "default_network_acl_id": null,
+            "default_route_table_id": "",
+            "default_security_group_id": "sg-00c5570a5dae02396",
+            "dhcp_options_id": "dopt-0d460cf6ac0013561",
+            "enable_dns_hostnames": true,
+            "enable_dns_support": true,
+            "enable_network_address_usage_metrics": false,
+            "id": "vpc-00c7c47549cd82ae1",
+            "instance_tenancy": "default",
+            "ipv4_ipam_pool_id": null,
+            "ipv4_netmask_length": null,
+            "ipv6_association_id": "",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_network_border_group": "",
+            "ipv6_ipam_pool_id": "",
+            "ipv6_netmask_length": 0,
+            "main_route_table_id": "",
+            "owner_id": "103670753244",
+            "tags": {
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-vpc",
+              "Owner": "Development Team",
+              "Type": "networking"
+            },
+            "tags_all": {
+              "CostCenter": "Engineering",
+              "Environment": "dev",
+              "ManagedBy": "Terraform",
+              "Name": "dagri-talk-dev-vpc",
+              "Owner": "Development Team",
+              "Type": "networking"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "create_before_destroy": true
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
