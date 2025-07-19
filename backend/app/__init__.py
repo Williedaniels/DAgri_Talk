@@ -20,17 +20,6 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     CORS(app, origins=['http://localhost:3000'])  # React dev server
     jwt.init_app(app)
     
-    # Simple health check endpoint for Docker
-    @app.route('/api/health')
-    def health():
-        try:
-            # A simple query to check database connectivity
-            db.session.execute('SELECT 1')
-            return jsonify({"status": "healthy"}), 200
-        except Exception as e:
-            # Log the error for debugging purposes if needed
-            return jsonify({"status": "unhealthy", "reason": str(e)}), 500
-
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.knowledge import knowledge_bp
@@ -40,4 +29,18 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     app.register_blueprint(knowledge_bp, url_prefix='/api/knowledge')
     app.register_blueprint(market_bp, url_prefix='/api/market')
     
+    # Health check endpoint for Docker
+    @app.route('/api/health')
+    def health():
+        try:
+            # A simple query to check database connectivity
+            db.session.execute('SELECT 1')
+            return jsonify({"status": "healthy", "service": "dagri-talk-backend"}), 200
+        except Exception as e:
+            # Log the error for debugging purposes if needed
+            return jsonify({"status": "unhealthy", "reason": str(e)}), 500
+    
+    # Create tables
+    with app.app_context():
+        db.create_all()
     return app
