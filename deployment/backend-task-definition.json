@@ -25,12 +25,10 @@
                 {
                     "name": "FLASK_APP",
                     "value": "run.py"
-                }
-            ],
-            "secrets": [
+                },
                 {
                     "name": "DATABASE_URL",
-                    "valueFrom": "arn:aws:secretsmanager:us-east-1:103670753244:secret:dagri-talk-dev-db-credentials-0sClVN:database_url::"
+                    "value": "postgresql://dagri_admin:dagri_password@dagri-talk-dev-db.c6bgo44kyxi5.us-east-1.rds.amazonaws.com:5432/dagri_talk_dev"
                 }
             ],
             "logConfiguration": {
@@ -40,6 +38,16 @@
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 }
+            },
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:5000/api/health || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 10,
+                "retries": 3,
+                "startPeriod": 60
             }
         }
     ]
