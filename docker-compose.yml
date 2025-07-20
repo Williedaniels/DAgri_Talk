@@ -52,7 +52,7 @@ services:
       target: production
     container_name: dagri-talk-backend-dev
     env_file:
-      - .env.development
+      - .env
     volumes:
       - ./backend:/app # Changed from ro (read-only) to default rw (read-write)
       - backend_logs:/app/logs
@@ -84,7 +84,7 @@ services:
         - REACT_APP_API_URL=${REACT_APP_API_URL}
     container_name: dagri-talk-frontend-dev
     env_file:
-      - .env.development
+      - .env
     ports:
       - "3000:80"
     depends_on:

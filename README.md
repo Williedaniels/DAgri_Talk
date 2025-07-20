@@ -104,13 +104,13 @@ cd DAgri_Talk
 
 ```bash
 # Start all services with Docker Compose
-docker-compose up -d
+docker compose up -d
 
 # View running services
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 ```
 
 #### 3. Access the Application
@@ -123,10 +123,10 @@ docker-compose logs -f
 
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (database data)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### 🔧 Manual Docker Setup

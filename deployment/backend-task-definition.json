@@ -25,10 +25,12 @@
                 {
                     "name": "FLASK_APP",
                     "value": "run.py"
-                },
+                }
+            ],
+            "secrets": [
                 {
                     "name": "DATABASE_URL",
-                    "value": "sqlite:///dagri_talk_dev.db"
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:103670753244:secret:dagri-talk-dev-db-credentials-0sClVN:database_url::"
                 }
             ],
             "logConfiguration": {
