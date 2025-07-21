@@ -57,42 +57,16 @@ def login():
     except Exception as e:
         return jsonify({'message': 'Login failed', 'error': str(e)}), 500
 
-@auth_bp.route('/user', methods=['GET']) 
-def get_user():
-    """Alternative profile endpoint to avoid JWT middleware issues"""
+@auth_bp.route('/profile', methods=['GET'])
+@jwt_required()
+def profile():
+    """Gets the profile of the currently logged-in user."""
     try:
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({'msg': 'Missing Authorization Header'}), 401
-            
-        token = auth_header.split(' ')[1]
-        
-        try:
-            # Decode token using PyJWT directly
-            secret_key = current_app.config.get('JWT_SECRET_KEY', 'jwt-secret-dagri-talk')
-            decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
-            user_id = decoded_token['sub']
-            
-            # Convert to integer for database query
-            if isinstance(user_id, str):
-                user_id = int(user_id)
-                
-            # Fetch user from database
-            user = User.query.get(user_id)
-            if not user:
-                return jsonify({'message': 'User not found'}), 404
-                
-            return jsonify(user.to_dict()), 200
-            
-        except jwt.InvalidTokenError:
-            return jsonify({'msg': 'Invalid token'}), 401
-        except Exception as token_error:
-            return jsonify({'msg': 'Token processing error', 'error': str(token_error)}), 401
-            
+        # The user identity is retrieved from the JWT
+        user_id = get_jwt_identity()
+        user = User.query.get(int(user_id))
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+        return jsonify(user.to_dict()), 200
     except Exception as e:
         return jsonify({'message': 'Failed to get user profile', 'error': str(e)}), 500
-
-@auth_bp.route('/profile', methods=['GET'])
-def profile():
-    """Standard profile endpoint - may have JWT middleware issues"""
-    return jsonify({'msg': 'Missing Authorization Header'}), 401

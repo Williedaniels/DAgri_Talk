@@ -1,11 +1,24 @@
-# Python bytecode
+# Git
+.git
+.gitignore
+
+# Docker
+.dockerignore
+Dockerfile
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.Python
+env/
+venv/
 
-# Virtual environment
-.venv/
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
 
 # Test artifacts
 .pytest_cache/
