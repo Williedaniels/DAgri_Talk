@@ -88,8 +88,7 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - dagri-network
     healthcheck:
@@ -104,7 +103,7 @@ services:
     image: nginx:alpine
     container_name: dagri-talk-nginx-dev
     volumes:
-      - ./docker/nginx:/etc/nginx/conf.d:ro
+      - ./frontend/docker/nginx:/etc/nginx/conf.d:ro
     ports:
       - "80:80"
     depends_on:

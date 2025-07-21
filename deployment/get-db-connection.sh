@@ -3,6 +3,12 @@
 
 echo "🔍 Getting RDS database connection details..."
 
+# --- Configuration ---
+# The name of the secret in AWS Secrets Manager containing the DB credentials.
+# This is assumed based on project naming conventions.
+SECRET_NAME="dagri-talk-dev-db-credentials"
+DB_NAME="dagri_talk_dev"
+
 # Get RDS instance endpoint
 DB_ENDPOINT=$(aws rds describe-db-instances \
     --db-instance-identifier dagri-talk-dev-db \
@@ -11,7 +17,7 @@ DB_ENDPOINT=$(aws rds describe-db-instances \
 
 if [ "$DB_ENDPOINT" = "None" ] || [ -z "$DB_ENDPOINT" ]; then
     echo "❌ RDS instance not found. Checking for Aurora cluster..."
-    
+
     # Try Aurora cluster
     DB_ENDPOINT=$(aws rds describe-db-clusters \
         --db-cluster-identifier dagri-talk-dev-cluster \
@@ -25,12 +31,23 @@ if [ "$DB_ENDPOINT" = "None" ] || [ -z "$DB_ENDPOINT" ]; then
     export DATABASE_URL="sqlite:///dagri_talk_dev.db"
 else
     echo "✅ Found RDS endpoint: $DB_ENDPOINT"
-    echo "📝 Database connection string:"
-    export DATABASE_URL="postgresql://dagri_user:your_db_password@$DB_ENDPOINT:5432/dagri_talk_dev"
-    echo "$DATABASE_URL"
-fi
 
-echo ""
-echo "🔧 Update your task definition with this DATABASE_URL:"
-echo "\"name\": \"DATABASE_URL\","
-echo "\"value\": \"$DATABASE_URL\""
+    echo "🔑 Retrieving credentials from AWS Secrets Manager..."
+    # Note: This requires 'jq' to be installed (e.g., 'brew install jq' or 'sudo apt-get install jq')
+    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query SecretString --output text)
+
+    if [ -z "$SECRET_JSON" ]; then
+        echo "❌ Could not retrieve secret '$SECRET_NAME'. Please check the secret name and IAM permissions."
+        exit 1
+    fi
+
+    # Parse credentials from the secret JSON
+    DB_USER=$(echo "$SECRET_JSON" | jq -r .username)
+    DB_PASSWORD=$(echo "$SECRET_JSON" | jq -r .password)
+
+    echo "📝 Building database connection string..."
+    export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_ENDPOINT}:5432/${DB_NAME}"
+
+    # For security, we no longer print the full URL with the password to the console.
+    echo "✅ Database connection string has been configured and exported as DATABASE_URL."
+fi

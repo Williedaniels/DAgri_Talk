@@ -20,6 +20,8 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     CORS(app, origins=['http://localhost:3000'])  # React dev server
     jwt.init_app(app)
     
+    # Configure JWT to work with string identities
+    
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.knowledge import knowledge_bp

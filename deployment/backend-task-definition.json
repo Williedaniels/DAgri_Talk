@@ -1,54 +1,56 @@
 {
-    "family": "dagri-talk-backend-dev",
-    "networkMode": "awsvpc",
-    "requiresCompatibilities": ["FARGATE"],
-    "cpu": "256",
-    "memory": "512",
-    "executionRoleArn": "arn:aws:iam::103670753244:role/ecsTaskExecutionRole",
-    "taskRoleArn": "arn:aws:iam::103670753244:role/ecsTaskRole",
-    "containerDefinitions": [
+  "family": "dagri-talk-backend-dev",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::103670753244:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::103670753244:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "dagri-talk-backend",
+      "image": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-backend:latest",
+      "portMappings": [
         {
-            "name": "dagri-talk-backend",
-            "image": "103670753244.dkr.ecr.us-east-1.amazonaws.com/dagri-talk-dev-backend:latest",
-            "portMappings": [
-                {
-                    "containerPort": 5000,
-                    "protocol": "tcp"
-                }
-            ],
-            "essential": true,
-            "environment": [
-                {
-                    "name": "FLASK_ENV",
-                    "value": "production"
-                },
-                {
-                    "name": "FLASK_APP",
-                    "value": "run.py"
-                },
-                {
-                    "name": "DATABASE_URL",
-                    "value": "postgresql://dagri_admin:dagri_password@dagri-talk-dev-db.c6bgo44kyxi5.us-east-1.rds.amazonaws.com:5432/dagri_talk_dev"
-                }
-            ],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/dagri-talk-backend-dev",
-                    "awslogs-region": "us-east-1",
-                    "awslogs-stream-prefix": "ecs"
-                }
-            },
-            "healthCheck": {
-                "command": [
-                    "CMD-SHELL",
-                    "curl -f http://localhost:5000/api/health || exit 1"
-                ],
-                "interval": 30,
-                "timeout": 10,
-                "retries": 3,
-                "startPeriod": 60
-            }
+          "containerPort": 5000,
+          "protocol": "tcp"
         }
-    ]
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "FLASK_ENV",
+          "value": "production"
+        },
+        {
+          "name": "FLASK_APP",
+          "value": "run.py"
+        },
+        {
+          "name": "DATABASE_URL",
+          "value": "postgresql://null:null@dagri-talk-dev-db.c6bgo44kyxi5.us-east-1.rds.amazonaws.com:5432/dagri_talk_dev"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/dagri-talk-backend-dev",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:5000/api/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
 }

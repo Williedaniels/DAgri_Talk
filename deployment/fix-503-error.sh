@@ -26,8 +26,12 @@ cp "$SCRIPT_DIR/frontend-task-definition.json" "$SCRIPT_DIR/frontend-task-defini
 
 # Update backend task definition with correct database URL
 if [ ! -z "$DATABASE_URL" ]; then
-    echo "📝 Updating backend task definition with database URL..."
-    sed -i '' "s|sqlite:///dagri_talk_dev.db|$DATABASE_URL|g" "$SCRIPT_DIR/backend-task-definition.json"
+    echo "📝 Updating backend task definition with database URL using jq..."
+    # Use jq to reliably update the value of the environment variable named DATABASE_URL.
+    # This is much more robust than sed. It creates a temporary file and then replaces the original.
+    # Note: This requires 'jq' to be installed (e.g., 'brew install jq')
+    jq --arg db_url "$DATABASE_URL" '(.containerDefinitions[] | select(.name=="dagri-talk-backend").environment) |= map(if .name == "DATABASE_URL" then .value = $db_url else . end)' "$SCRIPT_DIR/backend-task-definition.json" > "$SCRIPT_DIR/backend-task-definition.json.tmp" && mv "$SCRIPT_DIR/backend-task-definition.json.tmp" "$SCRIPT_DIR/backend-task-definition.json"
+    echo "✅ Backend task definition updated."
 fi
 
 # Step 3: Stop current services
@@ -93,7 +97,14 @@ echo ""
 echo "🏥 Step 7: Checking service health..."
 
 # Get ALB DNS name
-ALB_DNS="dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com"
+echo "🔍 Finding Application Load Balancer DNS name..."
+ALB_DNS=$(aws elbv2 describe-load-balancers --names dagri-talk-dev-alb --query 'LoadBalancers[0].DNSName' --output text 2>/dev/null || echo "")
+
+if [ -z "$ALB_DNS" ] || [ "$ALB_DNS" == "None" ]; then
+    echo "❌ Could not find the ALB DNS name for 'dagri-talk-dev-alb'. The script cannot continue."
+    echo "💡 You may need to manually restore your task definition from the .backup file."
+    exit 1
+fi
 
 echo "🌐 Testing application endpoints..."
 echo "Frontend: http://$ALB_DNS"
@@ -124,6 +135,10 @@ for i in {1..5}; do
         sleep 30
     fi
 done
+
+# Clean up backup files on success
+rm -f "$SCRIPT_DIR/backend-task-definition.json.backup"
+rm -f "$SCRIPT_DIR/frontend-task-definition.json.backup"
 
 echo ""
 echo "🎉 Deployment fix complete!"

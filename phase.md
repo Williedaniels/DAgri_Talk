@@ -8,8 +8,6 @@ This phase focuses on containerizing the D'Agri Talk Traditional Agricultural Kn
 
 **🌐 Live Application**: [http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com](http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com)
 
-http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com
-
 ## Infrastructure Screenshots
 
 ### 1. AWS ECS Cluster
