@@ -8,6 +8,10 @@ from app.extensions import jwt
 def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    @app.before_request
+    def log_request_info():
+        print(f"Received {request.method} request to {request.path}")
+        print(f"Headers: {dict(request.headers)}")
     app.config.from_object(config[config_name])
     
     # Initialize direct MongoDB connection
