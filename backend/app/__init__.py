@@ -1,49 +1,63 @@
 import os
-from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+from flask import Flask, jsonify, redirect, url_for
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from app.config import config
-
-db = SQLAlchemy()
-jwt = JWTManager()
-migrate = Migrate()
+from app.extensions import jwt
 
 def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
-    # Initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-    CORS(app, origins=['http://localhost:3000'])  # React dev server
-    jwt.init_app(app)
+    # Initialize direct MongoDB connection
+    from app import database
+    database.init_app(app)
     
-    # Configure JWT to work with string identities
+    # Initialize other extensions with more permissive CORS configuration
+    CORS(app, resources={r"/*": {
+        "origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://dagritalk-backend.azurewebsites.net/"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+        "supports_credentials": True
+    }})
+    jwt.init_app(app)
     
     # Register blueprints
     from app.routes.auth import auth_bp
     from app.routes.knowledge import knowledge_bp
     from app.routes.market import market_bp
+    from app.routes.api_root import api_root_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(knowledge_bp, url_prefix='/api/knowledge')
     app.register_blueprint(market_bp, url_prefix='/api/market')
+    app.register_blueprint(api_root_bp, url_prefix='/api')
     
-    # Health check endpoint for Docker
+    # Root route
+    @app.route('/')
+    def index():
+        return redirect(url_for('api_root.index'))
+    
+    # Health check route
     @app.route('/api/health')
-    def health():
+    def health_check():
         try:
-            # A simple query to check database connectivity
-            db.session.execute('SELECT 1')
-            return jsonify({"status": "healthy", "service": "dagri-talk-backend"}), 200
+            # Check if MongoDB connection works
+            db = database.get_db()
+            db.command('ping')
+            return jsonify({
+                'status': 'healthy', 
+                'message': 'Database connection successful'
+            }), 200
         except Exception as e:
-            # Log the error for debugging purposes if needed
-            return jsonify({"status": "unhealthy", "reason": str(e)}), 500
-    
-    # Create tables
-    with app.app_context():
-        db.create_all()
+            return jsonify({
+                'status': 'unhealthy', 
+                'message': f'Database connection failed: {str(e)}'
+            }), 500
+        
+
+    @app.route('/api/test-cors', methods=['GET', 'OPTIONS'])
+    def test_cors():
+        return jsonify({'message': 'CORS is working!'}), 200
     
     return app

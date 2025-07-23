@@ -1,33 +1,64 @@
-from app import db
 from datetime import datetime
+from bson.objectid import ObjectId
 
-class KnowledgeEntry(db.Model):
-    __tablename__ = 'knowledge_entry'
+"""
+Knowledge Entry document structure:
+{
+    _id: ObjectId,
+    title: String,
+    content: String,
+    language: String,
+    crop_type: String,
+    season: String,
+    region: String,
+    author_id: ObjectId,
+    created_at: DateTime,
+    updated_at: DateTime
+}
+"""
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    language = db.Column(db.String(50), default='English')
-    crop_type = db.Column(db.String(100))
-    season = db.Column(db.String(50))
-    region = db.Column(db.String(100))
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+def create_knowledge_entry(mongo, title, content, author_id, language=None, 
+                         crop_type=None, season=None, region=None):
+    """Create a new knowledge entry document"""
+    now = datetime.utcnow()
+    entry = {
+        'title': title,
+        'content': content,
+        'language': language,
+        'crop_type': crop_type,
+        'season': season,
+        'region': region,
+        'author_id': ObjectId(author_id),
+        'created_at': now,
+        'updated_at': now
+    }
+    return mongo.db.knowledge_entries.insert_one(entry)
 
-    author = db.relationship('User', backref=db.backref('knowledge_entries', lazy=True))
+def get_knowledge_entry(mongo, entry_id):
+    """Get knowledge entry by ID"""
+    if isinstance(entry_id, str):
+        entry_id = ObjectId(entry_id)
+    return mongo.db.knowledge_entries.find_one({'_id': entry_id})
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'title': self.title,
-            'content': self.content,
-            'language': self.language,
-            'crop_type': self.crop_type,
-            'season': self.season,
-            'region': self.region,
-            'author_id': self.author_id,
-            'author_username': self.author.username if self.author else None,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
-        }
+def get_all_knowledge_entries(mongo):
+    """Get all knowledge entries"""
+    return list(mongo.db.knowledge_entries.find())
+
+def knowledge_entry_to_dict(mongo, entry):
+    """Convert knowledge entry to dictionary for API responses"""
+    author = mongo.db.users.find_one({'_id': entry['author_id']})
+    author_username = author['username'] if author else None
+    
+    return {
+        'id': str(entry['_id']),
+        'title': entry['title'],
+        'content': entry['content'],
+        'language': entry.get('language'),
+        'crop_type': entry.get('crop_type'),
+        'season': entry.get('season'),
+        'region': entry.get('region'),
+        'author_id': str(entry['author_id']),
+        'author_username': author_username,
+        'created_at': entry['created_at'].isoformat(),
+        'updated_at': entry['updated_at'].isoformat()
+    }

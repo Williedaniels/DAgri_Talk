@@ -3,38 +3,37 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage 1: Build Dependencies (Builder Stage)
+# Stage 1: Builder for dependencies
 # -----------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM --platform=linux/amd64 python:3.11-slim AS builder
 
-# Set build arguments for optimization
-ARG DEBIAN_FRONTEND=noninteractive
+WORKDIR /build
 
-# Install system dependencies needed for building Python packages
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create application directory
-WORKDIR /app
-
-# Copy requirements first for better layer caching
+# Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies in user directory for better security
-RUN pip install --user --no-cache-dir --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
+# Fix the bson/pymongo conflict
+RUN pip uninstall -y bson pymongo && \
+    pip install --no-cache-dir pymongo==4.6.0
+
+# Install dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # -----------------------------------------------------------------------------
 # Stage 2: Production Runtime (Final Stage)
 # -----------------------------------------------------------------------------
-FROM python:3.11-slim AS production
+FROM --platform=linux/amd64 python:3.11-slim AS production
 
 # Set production environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH=/home/dagri/.local/bin:$PATH \
     FLASK_ENV=production
 
 # Install only runtime dependencies
@@ -44,26 +43,38 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user for security
-RUN groupadd -r dagri && useradd -r -g dagri dagri
-WORKDIR /app # Set workdir before copying
+# Create app directory
+WORKDIR /app
+
+# Copy dependencies from builder stage
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
-COPY --chown=dagri:dagri . . 
-COPY --chown=dagri:dagri gunicorn_conf.py .
+COPY . .
 
-# Copy Python packages from builder stage to the non-root user's home
-COPY --from=builder --chown=dagri:dagri /root/.local /home/dagri/.local
+# Fix potential bson/pymongo conflict in production
+RUN pip uninstall -y bson pymongo && \
+    pip install --no-cache-dir pymongo==4.6.0 && \
+    pip install --no-cache-dir certifi Flask-SQLAlchemy gunicorn
 
-# Switch to non-root user
-USER dagri
+# Create a non-root user for security
+RUN adduser --disabled-password --gecos '' appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
-# Expose port
-EXPOSE 5000
+# Expose the port
+EXPOSE 8000
 
-# Health check for container orchestration
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+ENV FLASK_APP=run.py
+ENV FLASK_ENV=production
 
-# Use gunicorn for production WSGI server
-CMD ["gunicorn", "-c", "gunicorn_conf.py", "run:app"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+# Command to run the application with Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "run:app"]

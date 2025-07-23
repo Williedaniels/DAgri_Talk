@@ -1,32 +1,57 @@
-from app import db
-from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from bson.objectid import ObjectId
+from datetime import datetime
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    user_type = db.Column(db.String(20), nullable=False)  # 'farmer', 'elder', 'buyer'
-    location = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    knowledge_entries = db.relationship('KnowledgeEntry', backref='author', lazy=True)
-    market_listings = db.relationship('MarketListing', backref='farmer', lazy=True)
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'user_type': self.user_type,
-            'location': self.location,
-            'created_at': self.created_at.isoformat()
-        }
+"""
+User document structure:
+{
+    _id: ObjectId,
+    username: String,
+    email: String,
+    password_hash: String,
+    user_type: String,  # 'farmer', 'elder', 'buyer'
+    location: String,
+    created_at: DateTime
+}
+"""
+
+def create_user(mongo, username, email, password, user_type, location=None):
+    """Create a new user document"""
+    user = {
+        'username': username,
+        'email': email,
+        'password_hash': generate_password_hash(password),
+        'user_type': user_type,
+        'location': location,
+        'created_at': datetime.utcnow()
+    }
+    return mongo.db.users.insert_one(user)
+
+def get_user_by_email(mongo, email):
+    """Get user by email"""
+    return mongo.db.users.find_one({'email': email})
+
+def get_user_by_username(mongo, username):
+    """Get user by username"""
+    return mongo.db.users.find_one({'username': username})
+
+def get_user_by_id(mongo, user_id):
+    """Get user by ID"""
+    if isinstance(user_id, str):
+        user_id = ObjectId(user_id)
+    return mongo.db.users.find_one({'_id': user_id})
+
+def check_password(user, password):
+    """Check password against stored hash"""
+    return check_password_hash(user['password_hash'], password)
+
+def user_to_dict(user):
+    """Convert user document to dictionary for API responses"""
+    return {
+        'id': str(user['_id']),
+        'username': user['username'],
+        'email': user['email'],
+        'user_type': user['user_type'],
+        'location': user['location'],
+        'created_at': user['created_at'].isoformat()
+    }

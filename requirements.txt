@@ -20,7 +20,6 @@ Pygments==2.19.2
 pytest==8.4.1
 python-dotenv==1.0.1
 six @ file:///AppleInternal/Library/BuildRoots/2c89a47b-9dd5-11ef-938f-6e654a286000/Library/Caches/com.apple.xbs/Sources/python3/six-1.15.0-py2.py3-none-any.whl
-SQLAlchemy==2.0.41
 sqlparse==0.5.3
 tomli==2.2.1
 typing_extensions==4.13.2
