@@ -39,7 +39,7 @@ RUN apk add --no-cache curl
 
 # Copy custom nginx configuration
 # COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-# COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Copy built React app from builder stage
 COPY --from=builder /app/build /usr/share/nginx/html
