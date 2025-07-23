@@ -18,7 +18,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including dev dependencies for build)
-RUN npm ci --silent
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -35,11 +35,11 @@ FROM nginx:alpine AS production
 RUN apk add --no-cache curl
 
 # Remove default nginx configuration
-RUN rm /etc/nginx/conf.d/default.conf
+# RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx configuration
-COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+# COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+# COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 # Copy built React app from builder stage
 COPY --from=builder /app/build /usr/share/nginx/html
@@ -48,12 +48,12 @@ COPY --from=builder /app/build /usr/share/nginx/html
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
-# Expose port 3000
-EXPOSE 3000
+# Expose port 80
+EXPOSE 80
 
 # Health check for container orchestration
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3000 || exit 1
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    # CMD curl -f http://localhost:3000 || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
