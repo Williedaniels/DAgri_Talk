@@ -7,6 +7,7 @@ from app.extensions import jwt
 
 def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     app.config.from_object(config[config_name])
     
     # Initialize direct MongoDB connection
@@ -14,12 +15,12 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     database.init_app(app)
     
     # Initialize other extensions with more permissive CORS configuration
-    CORS(app, resources={r"/*": {
-        "origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://dagritalk-backend.azurewebsites.net/"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "supports_credentials": True
-    }})
+    # CORS(app, resources={r"/*": {
+    #     "origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://dagritalk-backend.azurewebsites.net/"],
+    #     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    #     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+    #     "supports_credentials": True
+    # }})
     jwt.init_app(app)
     
     # Register blueprints
