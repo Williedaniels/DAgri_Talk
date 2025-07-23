@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, redirect, url_for
+from flask import Flask, jsonify, redirect, url_for, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from app.config import config
