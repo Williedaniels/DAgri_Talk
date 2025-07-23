@@ -20,7 +20,7 @@ def create_app(config_name=os.getenv('FLASK_ENV', 'default')):
     
     # Initialize other extensions with more permissive CORS configuration
     # CORS(app, resources={r"/*": {
-    #     "origins": ["http://localhost:3000", "http://127.0.0.1:3000", "https://dagritalk-backend.azurewebsites.net/"],
+    #     "origins": ["http://localhost:3000", "http://127.0.0.1:3000", "http://backend:5001/"],
     #     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     #     "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
     #     "supports_credentials": True
