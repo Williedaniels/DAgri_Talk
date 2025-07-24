@@ -6,39 +6,29 @@ This phase focuses on containerizing the D'Agri Talk Traditional Agricultural Kn
 
 ## Live Application URL
 
-**🌐 Live Application**: [http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com](http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com)
+**🌐 Live Application**: [http://dagri-talk.eastus.cloudapp.azure.com/](http://http://dagri-talk.eastus.cloudapp.azure.com/)
 
 ## Infrastructure Screenshots
 
-### 1. AWS ECS Cluster
+### 1. AZURE Virtual Machine
 <!-- Don't forget to add the screenshot image path here -->
-![ECS Cluster](screenshots/ecs-cluster.png)
+![Virtual Machine](screenshots/ecs-cluster.png)
 *Screenshot showing the dagri-talk-dev-cluster running with frontend and backend services*
 
-### 2. Application Load Balancer
+### 3. Docker Container Repositories
 
-![ALB Configuration](screenshots/alb-configuration.png)
-*Screenshot of the Application Load Balancer with target groups and routing rules*
-
-### 3. ECR Container Repositories
-
-![ECR Repositories](screenshots/ecr-repositories.png)
+![Docker Repositories](screenshots/ecr-repositories.png)
 *Screenshot showing frontend and backend ECR repositories with pushed images*
 
-### 4. RDS Database Instance
+### 4. MongoDb Database Instance
 
-![RDS Database](screenshots/rds-database.png)
-*Screenshot of the PostgreSQL RDS instance in private subnets*
+![MongoDB Database](screenshots/rds-database.png)
+*Screenshot of the MongoDB instance in private subnets*
 
-### 5. VPC and Networking
+### 5. Docker Compose
 
-![VPC Overview](screenshots/vpc-networking.png)
+![Docker Compose Overview](screenshots/docker-compose-networking.png)
 *Screenshot of VPC with public/private subnets, security groups, and NAT gateways*
-
-### 6. Terraform State
-
-![Terraform State](screenshots/terraform-state.png)
-*Screenshot showing successful terraform apply with all resources created*
 
 ## Peer Review Contribution
 
