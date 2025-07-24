@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, KnowledgeEntry, MarketListing } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://backend:5001/';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://dagri-talk-backend-qa:5001/';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

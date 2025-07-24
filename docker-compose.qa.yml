@@ -1,20 +1,22 @@
 # =============================================================================
-# D'Agri Talk - Production Docker Compose Configuration
+# D'Agri Talk - QA Environment Docker Compose Configuration
 # =============================================================================
 
 services:
-  # MongoDB Database (Production)
+  # MongoDB Database (QA)
   mongodb:
     image: mongo:4.4
     platform: linux/amd64
-    container_name: dagri-talk-mongodb-prod
+    container_name: dagri-talk-mongodb-qa
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: dagri_talk_prod
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: dagri_talk_qa
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
+    ports:
+      - "27017:27017"
     networks:
       - dagri-network
     healthcheck:
@@ -23,36 +25,36 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 1G
     restart: unless-stopped
 
-  # Flask Backend API (Production)
+  # Flask Backend API (QA)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
       target: production
+    container_name: dagri-talk-backend-qa
+    env_file:
+      - .env.qa
     environment:
       - FLASK_ENV=production
-      - MONGO_URI=mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/dagri_talk_prod?authSource=admin
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - SECRET_KEY=${SECRET_KEY}
+      - MONGO_URI=mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-admin123}@mongodb:27017/dagri_talk_qa?authSource=admin
     volumes:
       - backend_logs:/app/logs
+    ports:
+      - "8000:8000"
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
       - dagri-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
-      replicas: 2
       resources:
         limits:
           cpus: '1.0'
@@ -60,28 +62,31 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
     restart: unless-stopped
 
-  # React Frontend (Production)
+  # React Frontend (QA)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: production
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://backend:8000/api}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000/api}
+    container_name: dagri-talk-frontend-qa
+    env_file:
+      - .env.qa
+    ports:
+      - "3000:80"
     depends_on:
       - backend
     networks:
       - dagri-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     deploy:
-      replicas: 2
       resources:
         limits:
           cpus: '0.5'
@@ -89,14 +94,9 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     restart: unless-stopped
 
-# Production volumes for data persistence
+# QA volumes for data persistence
 volumes:
   mongodb_data:
     driver: local
@@ -105,10 +105,10 @@ volumes:
   backend_logs:
     driver: local
 
-# Production network for service communication
+# QA network for service communication
 networks:
   dagri-network:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.22.0.0/16
+        - subnet: 172.21.0.0/16

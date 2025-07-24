@@ -9,10 +9,16 @@ def get_db_client():
     """
     if 'mongo_client' not in g:
         mongo_uri = os.environ.get('MONGO_URI')
-        g.mongo_client = pymongo.MongoClient(
-            mongo_uri,
-            tlsCAFile=certifi.where()
-        )
+        
+        # Determine if we need SSL based on the URI or environment
+        use_ssl = 'ssl=true' in mongo_uri.lower() if mongo_uri else False
+        
+        # Configure client options based on SSL requirement
+        client_options = {}
+        if use_ssl:
+            client_options['tlsCAFile'] = certifi.where()
+        
+        g.mongo_client = pymongo.MongoClient(mongo_uri, **client_options)
     return g.mongo_client
 
 def get_db():
