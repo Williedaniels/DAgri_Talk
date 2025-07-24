@@ -71,7 +71,7 @@ services:
       dockerfile: Dockerfile
       target: production
       args:
-        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8000/api}
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-/api}
     container_name: dagri-talk-frontend-qa
     env_file:
       - .env.qa
