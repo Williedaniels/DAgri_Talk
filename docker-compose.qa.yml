@@ -76,7 +76,7 @@ services:
     env_file:
       - .env.qa
     ports:
-      - "3000:80"
+      - "80:80"
     depends_on:
       - backend
     networks:
