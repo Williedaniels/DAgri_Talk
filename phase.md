@@ -6,7 +6,7 @@ This phase focuses on containerizing the D'Agri Talk Traditional Agricultural Kn
 
 ## Live Application URL
 
-**🌐 Live Application**: [http://dagri-talk.eastus.cloudapp.azure.com/](http://http://dagri-talk.eastus.cloudapp.azure.com/)
+**🌐 Live Application**: [http://dagri-talk.eastus.cloudapp.azure.com/](http://dagri-talk.eastus.cloudapp.azure.com/)
 
 ## Infrastructure Screenshots
 
