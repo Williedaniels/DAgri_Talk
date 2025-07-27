@@ -1,0 +1,19 @@
+# Bandit configuration for Python security scanning
+skips: []
+tests: []
+
+# Exclude test files from security scanning
+exclude_dirs:
+  - '/tests'
+  - '/venv'
+  - '/.venv'
+
+# Security test configuration
+bandit_config:
+  # Skip assert_used_test in test files
+  skip_tests:
+    - B101  # assert_used
+
+  # High severity issues only in CI
+  severity: medium
+  confidence: medium
