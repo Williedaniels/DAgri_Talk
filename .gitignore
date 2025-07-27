@@ -92,4 +92,3 @@ venv.bak/
 .terraform/
 *.tfstate
 *.tfstate.*
-.claude

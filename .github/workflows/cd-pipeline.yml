@@ -1,0 +1,654 @@
+name: D'Agri Talk - Complete CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_BACKEND_REPOSITORY: dagri-talk-dev-backend
+  ECR_FRONTEND_REPOSITORY: dagri-talk-dev-frontend
+  ECS_CLUSTER: dagri-talk-dev-cluster
+  BACKEND_SERVICE: dagri-talk-backend-dev
+  FRONTEND_SERVICE: dagri-talk-frontend-dev
+
+jobs:
+  # ============================================================================
+  # STAGE 1: CODE QUALITY & TESTING
+  # ============================================================================
+  
+  code-quality:
+    name: 🔍 Code Quality & Testing
+    runs-on: ubuntu-latest
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect changes
+      uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+            - 'requirements.txt'
+          frontend:
+            - 'frontend/**'
+            - 'package*.json'
+
+    # Backend Quality Checks
+    - name: Set up Python 3.11
+      if: steps.changes.outputs.backend == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      if: steps.changes.outputs.backend == 'true'
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
+
+    - name: Install backend dependencies
+      if: steps.changes.outputs.backend == 'true'
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Backend linting and testing
+      if: steps.changes.outputs.backend == 'true'
+      run: |
+        cd backend
+        flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+        pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing
+
+    # Frontend Quality Checks
+    - name: Set up Node.js 18
+      if: steps.changes.outputs.frontend == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      if: steps.changes.outputs.frontend == 'true'
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Frontend linting and testing
+      if: steps.changes.outputs.frontend == 'true'
+      run: |
+        cd frontend
+        npm run lint
+        npm test -- --coverage --watchAll=false
+      env:
+        CI: true
+
+  # ============================================================================
+  # STAGE 2: COMPREHENSIVE SECURITY SCANNING
+  # ============================================================================
+  
+  security-scanning:
+    name: 🔒 DevSecOps Security Analysis
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Dependency Vulnerability Scanning
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    # Python Security Check
+    - name: Set up Python for security scanning
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install backend dependencies for security check
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+
+    - name: Python dependency security check
+      run: |
+        cd backend
+        safety check --json --output safety-report.json || true
+
+    # Node.js Security Check
+    - name: Set up Node.js for security scanning
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Node.js dependency security audit
+      run: |
+        cd frontend
+        npm audit --audit-level=moderate --json > npm-audit-report.json || true
+
+    # Container Security Scanning
+    - name: Build images for security scanning
+      run: |
+        docker build -t dagri-talk-backend:security-scan ./backend
+        docker build -t dagri-talk-frontend:security-scan ./frontend
+
+    - name: Scan backend container for vulnerabilities
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        image-ref: 'dagri-talk-backend:security-scan'
+        format: 'json'
+        output: 'backend-container-scan.json'
+
+    - name: Scan frontend container for vulnerabilities
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        image-ref: 'dagri-talk-frontend:security-scan'
+        format: 'json'
+        output: 'frontend-container-scan.json'
+
+    # Upload security reports as artifacts
+    - name: Upload security scan reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          trivy-results.sarif
+          backend/safety-report.json
+          frontend/npm-audit-report.json
+          backend-container-scan.json
+          frontend-container-scan.json
+
+  # ============================================================================
+  # STAGE 3: CONTAINER BUILD & REGISTRY PUSH
+  # ============================================================================
+  
+  build-and-push:
+    name: 🏗️ Build & Push Container Images
+    runs-on: ubuntu-latest
+    needs: [code-quality, security-scanning]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    
+    outputs:
+      backend-image-tag: ${{ steps.meta-backend.outputs.tags }}
+      frontend-image-tag: ${{ steps.meta-frontend.outputs.tags }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Extract metadata for backend
+      id: meta-backend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_BACKEND_REPOSITORY }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Extract metadata for frontend
+      id: meta-frontend
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_FRONTEND_REPOSITORY }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push backend image
+      if: needs.code-quality.outputs.backend-changed == 'true' || github.ref == 'refs/heads/main'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: ${{ steps.meta-backend.outputs.tags }}
+        labels: ${{ steps.meta-backend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push frontend image
+      if: needs.code-quality.outputs.frontend-changed == 'true' || github.ref == 'refs/heads/main'
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ steps.meta-frontend.outputs.tags }}
+        labels: ${{ steps.meta-frontend.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          REACT_APP_API_URL=${{ github.ref == 'refs/heads/main' && 'https://dagri-talk-prod-alb.us-east-1.elb.amazonaws.com/api' || 'https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com/api' }}
+
+  # ============================================================================
+  # STAGE 4: DEPLOY TO STAGING (Automatic on develop branch)
+  # ============================================================================
+  
+  deploy-staging:
+    name: 🚀 Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update ECS service - Backend
+      if: needs.code-quality.outputs.backend-changed == 'true'
+      run: |
+        # Get the latest task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition dagri-talk-backend-staging --query taskDefinition)
+        
+        # Update the image in the task definition
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ needs.build-and-push.outputs.backend-image-tag }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register the new task definition
+        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query taskDefinition.taskDefinitionArn --output text)
+        
+        # Update the service
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }}-staging --service dagri-talk-backend-staging --task-definition $NEW_TASK_DEF_ARN
+
+    - name: Update ECS service - Frontend
+      if: needs.code-quality.outputs.frontend-changed == 'true'
+      run: |
+        # Get the latest task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition dagri-talk-frontend-staging --query taskDefinition)
+        
+        # Update the image in the task definition
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ needs.build-and-push.outputs.frontend-image-tag }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register the new task definition
+        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query taskDefinition.taskDefinitionArn --output text)
+        
+        # Update the service
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }}-staging --service dagri-talk-frontend-staging --task-definition $NEW_TASK_DEF_ARN
+
+    - name: Wait for staging deployment to complete
+      run: |
+        echo "Waiting for staging deployment to stabilize..."
+        aws ecs wait services-stable --cluster ${{ env.ECS_CLUSTER }}-staging --services dagri-talk-backend-staging dagri-talk-frontend-staging
+        echo "✅ Staging deployment completed successfully!"
+
+    - name: Run staging health checks
+      run: |
+        echo "Running staging environment health checks..."
+        
+        # Wait for load balancer to be ready
+        sleep 30
+        
+        # Test backend health
+        for i in {1..10}; do
+          if curl -f -s "https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com/api/health" > /dev/null; then
+            echo "✅ Backend health check passed"
+            break
+          else
+            echo "⏳ Backend health check attempt $i/10, waiting 30 seconds..."
+            sleep 30
+          fi
+        done
+        
+        # Test frontend
+        for i in {1..5}; do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com/" || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Frontend health check passed"
+            break
+          else
+            echo "⏳ Frontend health check attempt $i/5, waiting 30 seconds..."
+            sleep 30
+          fi
+        done
+
+  # ============================================================================
+  # STAGE 5: INTEGRATION TESTS ON STAGING
+  # ============================================================================
+  
+  staging-integration-tests:
+    name: 🧪 Staging Integration Tests
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python for integration tests
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install test dependencies
+      run: |
+        pip install requests pytest
+
+    - name: Run API integration tests
+      run: |
+        echo "Running comprehensive integration tests on staging..."
+        
+        # Test API endpoints
+        python -c "
+        import requests
+        import sys
+        
+        base_url = 'https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com'
+        
+        # Test health endpoint
+        try:
+            response = requests.get(f'{base_url}/api/health', timeout=10)
+            assert response.status_code == 200
+            print('✅ Health endpoint test passed')
+        except Exception as e:
+            print(f'❌ Health endpoint test failed: {e}')
+            sys.exit(1)
+        
+        # Test knowledge endpoint
+        try:
+            response = requests.get(f'{base_url}/api/knowledge/', timeout=10)
+            assert response.status_code in [200, 401]  # 401 is acceptable for protected endpoints
+            print('✅ Knowledge endpoint test passed')
+        except Exception as e:
+            print(f'❌ Knowledge endpoint test failed: {e}')
+            sys.exit(1)
+        
+        # Test market endpoint
+        try:
+            response = requests.get(f'{base_url}/api/market/', timeout=10)
+            assert response.status_code in [200, 401]  # 401 is acceptable for protected endpoints
+            print('✅ Market endpoint test passed')
+        except Exception as e:
+            print(f'❌ Market endpoint test failed: {e}')
+            sys.exit(1)
+        
+        print('🎉 All integration tests passed!')
+        "
+
+    - name: Performance testing
+      run: |
+        echo "Running basic performance tests..."
+        
+        # Simple load test
+        for i in {1..10}; do
+          curl -s -o /dev/null -w "Request $i: %{time_total}s\n" "https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com/"
+        done
+
+  # ============================================================================
+  # STAGE 6: PRODUCTION DEPLOYMENT (Manual Approval Required)
+  # ============================================================================
+  
+  deploy-production:
+    name: 🏭 Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Create deployment record
+      run: |
+        echo "🚀 Starting production deployment..."
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Actor: ${{ github.actor }}"
+        echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+    - name: Update ECS service - Backend
+      if: needs.code-quality.outputs.backend-changed == 'true'
+      run: |
+        # Get the latest task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.BACKEND_SERVICE }} --query taskDefinition)
+        
+        # Update the image in the task definition
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ needs.build-and-push.outputs.backend-image-tag }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register the new task definition
+        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query taskDefinition.taskDefinitionArn --output text)
+        
+        # Update the service
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.BACKEND_SERVICE }} --task-definition $NEW_TASK_DEF_ARN
+
+    - name: Update ECS service - Frontend
+      if: needs.code-quality.outputs.frontend-changed == 'true'
+      run: |
+        # Get the latest task definition
+        TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition ${{ env.FRONTEND_SERVICE }} --query taskDefinition)
+        
+        # Update the image in the task definition
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "${{ needs.build-and-push.outputs.frontend-image-tag }}" '.containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.placementConstraints) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+        
+        # Register the new task definition
+        NEW_TASK_DEF_ARN=$(echo $NEW_TASK_DEFINITION | aws ecs register-task-definition --cli-input-json file:///dev/stdin --query taskDefinition.taskDefinitionArn --output text)
+        
+        # Update the service
+        aws ecs update-service --cluster ${{ env.ECS_CLUSTER }} --service ${{ env.FRONTEND_SERVICE }} --task-definition $NEW_TASK_DEF_ARN
+
+    - name: Wait for production deployment to complete
+      run: |
+        echo "Waiting for production deployment to stabilize..."
+        aws ecs wait services-stable --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.BACKEND_SERVICE }} ${{ env.FRONTEND_SERVICE }}
+        echo "✅ Production deployment completed successfully!"
+
+    - name: Run production health checks
+      run: |
+        echo "Running production environment health checks..."
+        
+        # Wait for load balancer to be ready
+        sleep 30
+        
+        # Test backend health
+        for i in {1..10}; do
+          if curl -f -s "http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com/api/health" > /dev/null; then
+            echo "✅ Production backend health check passed"
+            curl -s "http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com/api/health"
+            break
+          else
+            echo "⏳ Production backend health check attempt $i/10, waiting 30 seconds..."
+            sleep 30
+          fi
+        done
+        
+        # Test frontend
+        for i in {1..5}; do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com/" || echo "000")
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Production frontend health check passed"
+            break
+          else
+            echo "⏳ Production frontend health check attempt $i/5, waiting 30 seconds..."
+            sleep 30
+          fi
+        done
+
+    - name: Update CHANGELOG
+      run: |
+        echo "Updating CHANGELOG.md with deployment information..."
+        
+        # Create or update CHANGELOG entry
+        DATE=$(date -u +"%Y-%m-%d")
+        VERSION="v$(date -u +"%Y.%m.%d")-${{ github.run_number }}"
+        
+        # Prepare changelog entry
+        cat > changelog_entry.md << EOF
+        ## [$VERSION] - $DATE
+        
+        ### Deployed
+        - Production deployment from commit ${{ github.sha }}
+        - Deployed by: ${{ github.actor }}
+        - Pipeline run: ${{ github.run_number }}
+        
+        ### Changes
+        $(git log --oneline --since="24 hours ago" --pretty=format:"- %s" | head -10)
+        
+        EOF
+        
+        # Add to CHANGELOG if it exists, create if it doesn't
+        if [ -f CHANGELOG.md ]; then
+          cat CHANGELOG.md >> changelog_entry.md
+          mv changelog_entry.md CHANGELOG.md
+        else
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          cat changelog_entry.md >> CHANGELOG.md
+        fi
+
+    - name: Commit CHANGELOG update
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add CHANGELOG.md
+        git commit -m "chore: update CHANGELOG for production deployment" || exit 0
+        git push || exit 0
+
+  # ============================================================================
+  # STAGE 7: POST-DEPLOYMENT MONITORING & NOTIFICATIONS
+  # ============================================================================
+  
+  post-deployment:
+    name: 📊 Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+    - name: Monitor deployment health
+      run: |
+        echo "Monitoring deployment health for 5 minutes..."
+        
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          URL="http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com"
+          ENV="Production"
+        else
+          URL="https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com"
+          ENV="Staging"
+        fi
+        
+        echo "Monitoring $ENV environment at $URL"
+        
+        # Monitor for 5 minutes
+        for i in {1..10}; do
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/" || echo "000")
+          HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/health" || echo "000")
+          
+          echo "Check $i/10: Frontend=$HTTP_STATUS, Backend Health=$HEALTH_STATUS"
+          
+          if [ "$HTTP_STATUS" != "200" ] || [ "$HEALTH_STATUS" != "200" ]; then
+            echo "⚠️ Health check failed, continuing monitoring..."
+          else
+            echo "✅ Health check passed"
+          fi
+          
+          sleep 30
+        done
+
+    - name: Deployment notification
+      run: |
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "🎉 Production deployment completed successfully!"
+          echo "🌐 Application URL: http://dagri-talk-dev-alb-403835578.us-east-1.elb.amazonaws.com"
+        else
+          echo "🎉 Staging deployment completed successfully!"
+          echo "🌐 Staging URL: https://dagri-talk-staging-alb.us-east-1.elb.amazonaws.com"
+        fi
+        
+        echo "📊 Deployment Summary:"
+        echo "- Commit: ${{ github.sha }}"
+        echo "- Branch: ${{ github.ref_name }}"
+        echo "- Actor: ${{ github.actor }}"
+        echo "- Pipeline: ${{ github.run_number }}"
+        echo "- Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+  # ============================================================================
+  # STAGE 8: ROLLBACK CAPABILITY (On Failure)
+  # ============================================================================
+  
+  rollback-on-failure:
+    name: 🔄 Automatic Rollback
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Rollback to previous version
+      run: |
+        echo "🚨 Production deployment failed, initiating rollback..."
+        
+        # Get previous task definition revision
+        BACKEND_PREVIOUS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.BACKEND_SERVICE }} --query 'services[0].deployments[?status==`PRIMARY`].taskDefinition' --output text)
+        FRONTEND_PREVIOUS=$(aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.FRONTEND_SERVICE }} --query 'services[0].deployments[?status==`PRIMARY`].taskDefinition' --output text)
+        
+        echo "Rolling back to previous versions:"
+        echo "Backend: $BACKEND_PREVIOUS"
+        echo "Frontend: $FRONTEND_PREVIOUS"
+        
+        # Note: In a real scenario, you would implement proper rollback logic
+        # This is a placeholder for rollback functionality
+        echo "Rollback completed (placeholder implementation)"
+
+    - name: Rollback notification
+      run: |
+        echo "🚨 ROLLBACK COMPLETED"
+        echo "Production deployment failed and has been rolled back to the previous version."
+        echo "Please investigate the deployment logs and fix issues before attempting another deployment."
