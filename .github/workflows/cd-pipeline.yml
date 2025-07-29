@@ -111,7 +111,7 @@ jobs:
 
     # Dependency Vulnerability Scanning
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@0.20.0
+      uses: aquasecurity/trivy-action@0.32.0
       with:
         scan-type: 'fs'
         scan-ref: '.'
@@ -158,14 +158,14 @@ jobs:
         docker build -t dagri-talk-frontend:security-scan ./frontend
 
     - name: Scan backend container for vulnerabilities
-      uses: aquasecurity/trivy-action@0.20.0
+      uses: aquasecurity/trivy-action@0.32.0
       with:
         image-ref: 'dagri-talk-backend:security-scan'
         format: 'json'
         output: 'backend-container-scan.json'
 
     - name: Scan frontend container for vulnerabilities
-      uses: aquasecurity/trivy-action@0.20.0
+      uses: aquasecurity/trivy-action@0.32.0
       with:
         image-ref: 'dagri-talk-frontend:security-scan'
         format: 'json'
