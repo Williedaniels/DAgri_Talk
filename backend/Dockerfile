@@ -5,7 +5,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Builder for dependencies
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 python:3.11-slim AS builder
+FROM --platform=linux/amd64 python:3.13-slim AS builder
 
 WORKDIR /build
 
@@ -29,7 +29,7 @@ RUN pip install --upgrade pip && \
 # -----------------------------------------------------------------------------
 # Stage 2: Production Runtime (Final Stage)
 # -----------------------------------------------------------------------------
-FROM --platform=linux/amd64 python:3.11-slim AS production
+FROM --platform=linux/amd64 python:3.13-slim AS production
 
 # Set production environment variables
 ENV PYTHONUNBUFFERED=1 \
