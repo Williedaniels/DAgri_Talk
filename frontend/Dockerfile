@@ -5,7 +5,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Build React Application (Builder Stage)
 # -----------------------------------------------------------------------------
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Set build arguments
 ARG NODE_ENV=production
