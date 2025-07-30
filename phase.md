@@ -32,7 +32,7 @@ This phase focuses on containerizing the D'Agri Talk Traditional Agricultural Kn
 
 ## Peer Review Contribution
 
-**🔍 Pull Request Reviewed**: [https://github.com/Williedaniels/DAgri_Talk/pulls](https://github.com/Williedaniels/DAgri_Talk/pulls)
+**🔍 Pull Request Reviewed**: [https://github.com/Williedaniels/DAgri_Talk/pull/23](https://github.com/Williedaniels/DAgri_Talk/pull/23)
 
 *Note: I haven't had a peer review yet, hence I've added my repo link to my pull requests**
 
