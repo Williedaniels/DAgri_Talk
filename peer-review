@@ -1,0 +1,33 @@
+# D'Agri Talk Peer Review by Eric Nyuma
+
+D'Agri Talk is an impressive and socially impactful project that demonstrates strong technical execution, thoughtful design, and a clear focus on solving real agricultural challenges in Liberia.
+
+💡 Strengths
+Clear Social Impact: Tackles real problems in agriculture, knowledge preservation, and language barriers.
+
+Strong Architecture: Clean full-stack setup (React + Flask + PostgreSQL) with CI/CD, Docker, and AWS Terraform infrastructure.
+
+Excellent Documentation: Detailed setup instructions, developer onboarding, API references, and testing guides.
+
+Community-Centered: Focus on local languages, peer validation, and mobile-first design shows strong user empathy.
+
+🛠️ Areas for Improvement
+No Demo or UI Screenshots  
+→ Add images, video, or a live preview link to showcase the frontend and user experience.
+
+Unclear Multimedia Strategy  
+→ Provide details on how audio/images are uploaded, stored (e.g., S3, local storage), and accessed.
+
+Missing Role-Based Access & Moderation Details  
+→ Define user roles (e.g., admin, contributor, viewer), permissions, and the process for reviewing and approving knowledge entries.
+
+Security & Performance  
+→ Include information on password hashing (e.g., bcrypt), spam protection mechanisms, caching strategies, and offline syncing capabilities.
+
+📌 Recommendations
+
+1.⁠ ⁠Include a frontend demo (GIF, screenshots, or deploy preview) to highlight the user interface and functionality.
+2.⁠ ⁠Clarify the multimedia upload/hosting strategy, including storage solutions and retrieval methods.
+3.⁠ ⁠Define access control and moderation workflows, ensuring transparency in how content is validated.
+4.⁠ ⁠Enhance UI accessibility and consider progressive enhancements like PWA features and offline support.
+5.⁠ ⁠Add a section on security practices, such as encryption, secure API endpoints, and data validation.
