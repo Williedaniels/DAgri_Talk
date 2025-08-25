@@ -1,7 +1,7 @@
 flask==2.3.3
 flask-cors==4.0.0
 flask-jwt-extended==4.5.3
-pymongo==4.6.0
+pymongo==4.14.1
 flask-pymongo==2.3.0
 certifi==2025.7.14
 python-dotenv==1.0.1
